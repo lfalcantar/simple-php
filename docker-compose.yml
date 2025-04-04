@@ -9,8 +9,7 @@ services:
       - "8000:8000"
     # Ensure the database is complete before starting
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     # Set environment variables for database connection
     environment:
       - DB_HOST=db        # Database host (service name in docker-compose)

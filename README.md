@@ -9,20 +9,29 @@ A modern PHP web application that provides information about using AI for coding
 - Best practices and guidelines
 - Interactive card-based layout
 - Mobile-friendly design
+- Automatic logging of visitor information to PostgreSQL database
+- Admin page to view access logs
 
 ## Requirements
 
 - PHP 7.4 or higher
-- A web server (Apache, Nginx, etc.)
-- OR Docker (for containerized deployment)
+- PostgreSQL (optional, if using Docker)
+- Docker and Docker Compose (optional)
 
 ## Setup Options
 
-### Option 1: Traditional Setup
-1. Clone this repository to your local machine
-2. Place the files in your web server's document root
-3. Start your web server
-4. Access the application through your web browser
+### Option 1: Using Docker Compose (Recommended)
+1. Make sure you have Docker and Docker Compose installed
+2. Run the following command:
+   ```bash
+   docker-compose up --build
+   docker-compose down -v
+   docker-compose down
+   docker-compose exec db psql -U postgres -d ai_guide -c "SELECT * FROM page_access;"
+   ```
+3. The application will be available at `http://localhost:8000`
+4. The admin page will be available at `http://localhost:8000/admin.php`
+5. The database will be available at `localhost:5432`
 
 ### Option 2: Using PHP's Built-in Server
 You can quickly test the application using PHP's built-in development server:
@@ -31,35 +40,59 @@ You can quickly test the application using PHP's built-in development server:
 php -S localhost:8000
 ```
 
-Then open your browser and navigate to `http://localhost:8000`
+Then open your browser and navigate to:
+- Main application: `http://localhost:8000`
+- Admin page: `http://localhost:8000/admin.php`
 
-### Option 3: Using Docker (Simplified)
-1. Make sure you have Docker installed on your system
-2. Build the Docker image:
-   ```bash
-   docker build -t php-simple-server .
-   ```
-3. Run the container:
-   ```bash
-   docker run -p 8000:8000 php-simple-server
-   ```
-4. Open your browser and visit `http://localhost:8000`
+#### Database Setup (for local development)
+1. Install PostgreSQL
+2. Create a database named `ai_guide`
+3. Run the SQL commands in `config/schema.sql`
+4. Update the database credentials in `config/database.php`
 
-#### How it works:
-- The container uses PHP's built-in development server (just like running `php -S localhost:8000`)
-- All files are copied to the `/app` directory inside the container
-- Port 8000 inside the container is mapped to port 8000 on your computer
+## Pages
+
+### Main Page (`index.php`)
+- Displays information about AI coding
+- Automatically logs visitor information
+- Modern, responsive design
+
+### Admin Page (`admin.php`)
+- View all access logs in a table format
+- Shows detailed information about each visit:
+  - IP Address
+  - User Agent
+  - Page URL
+  - Access Time
+  - Referrer
+  - Browser Language
+  - Screen Resolution
+- No password required (for educational purposes)
+
+## Database Schema
+
+The application logs the following information for each page access:
+- IP Address
+- User Agent (browser information)
+- Page URL
+- Access Time
+- Referrer
+- Browser Language
+- Screen Resolution
 
 ## Technologies Used
 
 - PHP
+- PostgreSQL
 - HTML5
 - CSS3
 - Font Awesome Icons
-- Docker (optional)
+- Docker
+- Docker Compose
 
-## php:8.2
-This project is open source and available under the MIT License. 
+## License
+
+This project is open source and available under the MIT License.
 
 A full Debian OS
 

@@ -1,0 +1,45 @@
+# Define the services (containers) that make up our application
+services:
+  # Our PHP application service
+  app:
+    # Build the Docker image using the Dockerfile in the current directory
+    build: .
+    # Map port 8000 on the host to port 8000 in the container
+    ports:
+      - "8000:8000"
+    # Ensure the database is complete before starting
+    depends_on:
+      db:
+        condition: service_healthy
+    # Set environment variables for database connection
+    environment:
+      - DB_HOST=db        # Database host (service name in docker-compose)
+      - DB_NAME=ai_guide  # Database name
+      - DB_USER=postgres  # Database username
+      - DB_PASS=postgres  # Database password
+      - PGPASSWORD=postgres  # For psql command
+    # Mount the current directory to /app in the container for live code updates
+    volumes:
+      - .:/app
+
+  # PostgreSQL database service
+  db:
+    # Use the official PostgreSQL 15 image
+    image: postgres:15
+    # Set PostgreSQL environment variables
+    environment:
+      - POSTGRES_DB=ai_guide      # Create a database named ai_guide
+      - POSTGRES_USER=postgres    # Set the database user
+      - POSTGRES_PASSWORD=postgres # Set the database password
+    # Map port 5432 on the host to port 5432 in the container
+    ports:
+      - "5432:5432"
+    # Persist database data using a named volume
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./config/schema.sql:/docker-entrypoint-initdb.d/init.sql
+
+# Define named volumes for data persistence
+volumes:
+  # Create a volume named postgres_data to store database files
+  postgres_data: 

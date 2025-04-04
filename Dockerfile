@@ -1,5 +1,9 @@
-# Use the official PHP image
-FROM php:8.2
+# Use the official PHP Alpine image for smaller size
+FROM php:8.2-alpine
+
+# Install PostgreSQL extension and required dependencies
+RUN apk add --no-cache postgresql-dev postgresql-client \
+    && docker-php-ext-install pdo pdo_pgsql
 
 # Create a directory for our app
 WORKDIR /app
@@ -7,8 +11,7 @@ WORKDIR /app
 # Copy all files to our app directory
 COPY . /app/
 
-# Expose port 8000 for the PHP development server saying container listens on port 8000 internally."
-# But by itself, it doesn't open or forward the port to your host machine.
+# Expose port 8000 for the PHP development server
 EXPOSE 8000
 
 # Start the PHP development server

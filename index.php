@@ -1,3 +1,72 @@
+<?php
+require_once 'config/database.php';
+
+// Debug: Check database connection
+try {
+    // Test the connection
+    $pdo->query("SELECT 1");
+    error_log("Database connection successful");
+} catch (PDOException $e) {
+    error_log("Database connection failed: " . $e->getMessage());
+    die("Database connection failed");
+}
+
+// Create table if it doesn't exist
+try {
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS page_access (
+            id SERIAL PRIMARY KEY,
+            ip_address VARCHAR(45),
+            user_agent TEXT,
+            page_url TEXT,
+            access_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            referrer TEXT,
+            browser_language VARCHAR(50),
+            screen_resolution VARCHAR(20)
+        )
+    ");
+    error_log("Table created or already exists");
+} catch (PDOException $e) {
+    error_log("Error creating table: " . $e->getMessage());
+    die("Error creating table");
+}
+
+// Log access details
+try {
+    $stmt = $pdo->prepare("
+        INSERT INTO page_access 
+        (ip_address, user_agent, page_url, referrer, browser_language, screen_resolution) 
+        VALUES (?, ?, ?, ?, ?, ?)
+    ");
+
+    $ip = $_SERVER['REMOTE_ADDR'];
+    $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
+    $pageUrl = $_SERVER['REQUEST_URI'];
+    $referrer = $_SERVER['HTTP_REFERER'] ?? 'Direct';
+    $language = substr($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? 'Unknown', 0, 50);
+    $resolution = isset($_GET['resolution']) ? $_GET['resolution'] : 'Unknown';
+
+    error_log("Logging access: IP=$ip, URL=$pageUrl, Resolution=$resolution, Language=$language");
+
+    $stmt->execute([
+        $ip,
+        $userAgent,
+        $pageUrl,
+        $referrer,
+        $language,
+        $resolution
+    ]);
+
+    error_log("Access logged successfully");
+} catch (PDOException $e) {
+    error_log("Error logging access: " . $e->getMessage());
+}
+
+// If this is a resolution update request, just exit
+if (isset($_GET['resolution']) && !isset($_GET['full_page'])) {
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +75,32 @@
     <title>AI Coding Assistant Guide</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        // Function to log access
+        function logAccess() {
+            const resolution = window.screen.width + 'x' + window.screen.height;
+            const url = new URL(window.location.href);
+            url.searchParams.set('resolution', resolution);
+            url.searchParams.set('full_page', 'true');
+            
+            // Make a direct request to log the access
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', url.toString(), true);
+            xhr.send();
+            
+            console.log('Access logged:', resolution);
+        }
+
+        // Log on page load
+        document.addEventListener('DOMContentLoaded', logAccess);
+
+        // Log on visibility change
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                logAccess();
+            }
+        });
+    </script>
 </head>
 <body>
     <div class="container">
